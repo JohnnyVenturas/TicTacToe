@@ -1,7 +1,7 @@
 all:fancy-client client
 
 fancy-client: fancy-client.o
-	gcc -Wall -Werror -o fancy-client fancy-client.o
+	gcc -Wall -Werror -lpthread -o fancy-client fancy-client.o
 
 fancy-client.o: fancy-client.c
 	gcc -c -g fancy-client.c
