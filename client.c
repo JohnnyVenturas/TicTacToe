@@ -11,7 +11,8 @@ int main(int argc, char **argv) {
     struct sockaddr_in address;
     memset(&address, 0, sizeof(struct sockaddr_in));
     address.sin_port = htons(atoi(argv[2]));
-    inet_pton(sockfd, argv[1], &address.sin_addr);
+    address.sin_family = AF_INET;
+    inet_pton(AF_INET, argv[1], &address.sin_addr);
 
     tic_tac_toe(sockfd, &address);
 }
@@ -81,12 +82,12 @@ void print_board(char *message_buffer, int size) {
 
         if (j > 2 || j < 0) {
             fprintf(stderr, "We have an error:Bad Index \n");
-            exit(-1);
+            //exit(-1);
         }
 
         if (k > 2 || k < 0) {
             fprintf(stderr, "We have an error:Bad Index \n");
-            exit(-1);
+            //exit(-1);
         }
 
         matrix[j][k] = message_buffer[i] == 1 ? 'X' : 'O';
