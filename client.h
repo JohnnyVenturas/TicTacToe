@@ -53,7 +53,7 @@ struct read_buffer {
 };
 
 void tic_tac_toe(int sockfd, struct sockaddr_in *address);
-void print_board(char *message_buffer);
+void print_board(char *message_buffer, int size);
 void get_move(int sockfd, struct sockaddr *address, char *send_buf);
 
 void printByteByByte( void* buffer, int size);

@@ -12,7 +12,6 @@ int main(int argc, char **argv) {
     memset(&address, 0, sizeof(struct sockaddr_in));
     address.sin_port = htons(atoi(argv[2]));
     inet_pton(sockfd, argv[1], &address.sin_addr);
-
     tic_tac_toe(sockfd, &address);
 }
 
@@ -32,74 +31,32 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
             fprintf(stderr, "Error in receiving bytes form server");
             exit(1);  // or maybe make the function in and return 1
         }
-
-        message_buffer[recv_bytes] = '\0';
-
         if (DEBUG) {
             printf("DEBUG: byte by byte from buffer: \n");
             printByteByByte(message_buffer, recv_bytes);
         }
         switch (message_buffer[0]) {
-        case FYI:
-            print_board(message_buffer, recv_bytes);
-            break;
-        case TXT:
-            printf("%s \n", message_buffer);  // inainte era +1 nush de ce
-            break;
-        case MYM:
-            get_move(sockfd, (struct sockaddr *)address, send_buf);
-            break;
+            case FYI:
+                break;
+            case TXT:
+                printf("%s \n", message_buffer);  // inainte era +1 nush de ce
+                break;
+            case MYM:
+                get_move(sockfd, (struct sockaddr *)address, send_buf);
+                break;
 
-        case END:
-            if (strlen(message_buffer) > 1) {
-                if (message_buffer[1]) {
-                    printf("Player One won \n");
-                } else {
-                    printf("Player Two won \n");
+            case END:
+                if (strlen(message_buffer) > 1) {
+                    printf("%s cplm \n", message_buffer + 1);
+                    exit(1);
                 }
+                printf("\n DRAW \n ");
                 exit(1);
-            }
-            printf("\n DRAW \n ");
-            exit(1);
         }
     }
 }
 
-void print_board(char *message_buffer, int size) {
-    if (*message_buffer != FYI) {
-        fprintf(stderr, "We have encountered and error, not FYI \n");
-    }
-
-    int filled_positions = *(message_buffer + 1);
-    char matrix[3][3];
-    memset(matrix, 0, sizeof(matrix));
-    int i, j, k;
-
-    for (i = 2; i < size; i += 3) {
-        j = message_buffer[i + 1];
-        k = message_buffer[i + 2];
-
-        if (j > 2 || j < 0) {
-            fprintf(stderr, "We have an error:Bad Index \n");
-            exit(-1);
-        }
-
-        if (k > 2 || k < 0) {
-            fprintf(stderr, "We have an error:Bad Index \n");
-            exit(-1);
-        }
-
-        matrix[j][k] = message_buffer[i] == 1 ? 'X' : 'O';
-    }
-
-    for (i = 0; i < 3; ++i) {
-        for (j = 0; j < 3; ++j) {
-            if (matrix[i][j] == 0) printf("_");
-            printf("%c ", matrix[i][j]);
-        }
-        printf("\n");
-    }
-}
+void print_board(char *message_buffer) { printf("%s \n", message_buffer); }
 
 void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
     printf("Please make your move by entering row and column: \n");
@@ -123,17 +80,14 @@ void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
         printf("We are printing send_buf byte by byte: \n");
         printByteByByte(send_buf, 3);
     }
-
     sendto(sockfd, send_buf, 3, 0, (struct sockaddr *)address, sizeof(struct sockaddr_in));
 }
 
 void printByteByByte(void *buffer, int size) {
     unsigned char *bytes = (unsigned char *)buffer;
     int i;
-
     for (i = 0; i < size; i++) {
         printf("%02X ", bytes[i]);
     }
-
     printf("\n");
 }
