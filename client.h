@@ -1,4 +1,5 @@
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -45,6 +46,12 @@ the player (1 or 2), the column (0, 1, 2) and the row (0, 1, 2) are indicated.
 
 
   */
-void tic_tac_toe();
+struct read_buffer {
+    char *buffer;
+    int buf_length;
+};
 
-void 
+void tic_tac_toe(int sockfd, struct sockaddr_in *address);
+void print_board(char *message_buffer);
+void get_move(int sockfd, struct sockaddr *address, char *send_buf);
+
