@@ -10,6 +10,7 @@
 #define TXT 0x04
 #define MOV 0x05
 #define LFT 0x06
+#define DEBUG 1
 /*
  * Messages From Server to Clients
  * */
@@ -55,3 +56,4 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address);
 void print_board(char *message_buffer);
 void get_move(int sockfd, struct sockaddr *address, char *send_buf);
 
+void printByteByByte( void* buffer, int size);
