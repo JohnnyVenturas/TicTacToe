@@ -42,27 +42,27 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
             printByteByByte(message_buffer, recv_bytes);
         }
         switch (message_buffer[0]) {
-            case FYI:
-                print_board(message_buffer, recv_bytes);
-                break;
-            case TXT:
-                printf("%s \n", message_buffer);  // inainte era +1 nush de ce
-                break;
-            case MYM:
-                get_move(sockfd, (struct sockaddr *)address, send_buf);
-                break;
+        case FYI:
+            print_board(message_buffer, recv_bytes);
+            break;
+        case TXT:
+            printf("%s \n", message_buffer);  // inainte era +1 nush de ce
+            break;
+        case MYM:
+            get_move(sockfd, (struct sockaddr *)address, send_buf);
+            break;
 
-            case END:
-                if (strlen(message_buffer) > 1) {
-                    if (message_buffer[1]) {
-                        printf("Player One won \n");
-                    } else {
-                        printf("Player Two won \n");
-                    }
-                    exit(1);
+        case END:
+            if (strlen(message_buffer) > 1) {
+                if (message_buffer[1]) {
+                    printf("Player One won \n");
+                } else {
+                    printf("Player Two won \n");
                 }
-                printf("\n DRAW \n ");
                 exit(1);
+            }
+            printf("\n DRAW \n ");
+            exit(1);
         }
     }
 }
@@ -83,12 +83,12 @@ void print_board(char *message_buffer, int size) {
 
         if (j > 2 || j < 0) {
             fprintf(stderr, "We have an error:Bad Index \n");
-            // exit(-1);
+            //exit(-1);
         }
 
         if (k > 2 || k < 0) {
             fprintf(stderr, "We have an error:Bad Index \n");
-            // exit(-1);
+            //exit(-1);
         }
 
         matrix[j][k] = message_buffer[i] == 1 ? 'X' : 'O';
