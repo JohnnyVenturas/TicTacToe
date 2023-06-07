@@ -54,15 +54,16 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
                 break;
 
             case END:
-                if (strlen(message_buffer) > 1) {
-                    if (message_buffer[1]) {
-                        printf("Player One won \n");
-                    } else {
-                        printf("Player Two won \n");
-                    }
-                    exit(1);
+                if (message_buffer[1] == 1) {
+                    printf("Player One won \n");
+                } else if (message_buffer[1] == 2) {
+                    printf("Player Two won \n");
+                } else if (message_buffer[1] == 0) {
+                    printf("\nDRAW\n ");
+                } else {
+                    printf("\nNo room for you\n");
                 }
-                printf("\n DRAW \n ");
+
                 exit(1);
         }
     }
