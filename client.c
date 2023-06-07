@@ -69,6 +69,8 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
 }
 
 void print_board(char *message_buffer, int size) {
+    printf("We are in clinet in FYI \n");
+    printByteByByte(message_buffer, size);
     if (*message_buffer != FYI) {
         fprintf(stderr, "We have encountered and error, not FYI \n");
     }
@@ -94,6 +96,8 @@ void print_board(char *message_buffer, int size) {
 
         matrix[j][k] = message_buffer[i] == 1 ? 'X' : 'O';
     }
+    printf("We are in clinet in FYI. Here we should print the empty matrix \n");
+    printByteByByte(message_buffer, size);
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {

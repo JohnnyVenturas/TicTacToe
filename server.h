@@ -25,7 +25,7 @@
 #define TXT 0x04
 #define MOV 0x05
 #define LFT 0x06
-#define SPACE 0x20
+#define SPACE 0x41
 #define TRUE 1
 #define FALSE 0
 #define FIND_GAME(client) (client / 2)
@@ -65,3 +65,4 @@ void debug_message(char *message);
 void init_game_update();
 
 
+void printByteByByte(void *buffer, int size);

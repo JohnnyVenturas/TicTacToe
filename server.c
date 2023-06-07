@@ -1,10 +1,10 @@
 #include "server.h"
 
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-char games[MAX_GAMES][32];
 char games[MAX_GAMES][32];
 int game_update[MAX_GAMES];
 int which_client_update[MAX_GAMES];
@@ -27,10 +27,11 @@ int check_game_validity(int game_num, int i, int j) {
 
     char board[3][3] = {{SPACE, SPACE, SPACE}, {SPACE, SPACE, SPACE}, {SPACE, SPACE, SPACE}};
 
-    char player_char[3] = {'\0', 'X', 'O'};
+    char player_char[3] = {'A', 'X', 'O'};
 
-    for (int k = 2; k < 3 * games[game_num][1] + 2; k += 3) {
-        board[k + 1][k + 2] = player_char[k];
+    int k;
+    for (k = 2; k < 3 * games[game_num][1] + 2; k += 3) {
+        board[games[game_num][k + 1]][games[game_num][k + 2]] = player_char[games[game_num][k]];
     }
 
     char letter = player_char[player_num];
@@ -102,31 +103,42 @@ void play_game(void *args) {
         int current_player = 2 * game + which_client_update[game];
         int other_player = 2 * game + (1 - which_client_update[game]);
 
-        int game_status = check_game_validity(game, (int)(clients[game].msg[1]),
-                                              (int)(clients[game].msg[2]));  // ASLO UPDATES THE STATE OF THE GAME
+        printf("Tigan Gypse %d %d %d curr \n", clients[current_player].msg[0], clients[current_player].msg[1],
+               clients[current_player].msg[2]);
+        int game_status =
+            check_game_validity(game, (int)(clients[current_player].msg[1]),
+                                (int)(clients[current_player].msg[2]));  // ASLO UPDATES THE STATE OF THE GAME
 
         if (DEBUG == 1) {
-            printf("game status is %d \n", game_status);
+            printf("game status is %d \n", game_status + 100);
             printf("The state of the game after update is : \n %s \n", games[game]);
         }
 
+        int sendclient;
         if (game_status < 0) {
             client *destination;
-            if (game_status == -2)
+            if (game_status == -2) {
                 destination = &clients[current_player];
-            else
+                sendclient = current_player;
+            } else {
                 destination = &clients[other_player];
+                sendclient = other_player;
+            }
 
             char send_buf = MYM;
-            pthread_mutex_lock(&sock_mutex);
-            printf("Sending FYI to: \n");
+            //pthread_mutex_lock(&sock_mutex);
+            printf("Sending FYI to client: %d with address %s \n", sendclient,
+                   inet_ntoa(destination->address.sin_addr));
+
+            printByteByByte(destination->msg, strlen(destination->msg));
+
             sendto(sockfd, (void *)(games[game]), strlen(games[game]), 0, (struct sockaddr *)&destination->address,
                    sizeof(struct sockaddr_in));  // send the FYI
-            printf("Sending MYM to: \n");
+            printf("Sending MYM to: %d with address %s \n", current_player, inet_ntoa(destination->address.sin_addr));
 
             sendto(sockfd, (void *)&send_buf, 1, 0, (struct sockaddr *)&destination->address,
                    sizeof(struct sockaddr_in));  // send the make you move
-            pthread_mutex_unlock(&sock_mutex);
+            //pthread_mutex_unlock(&sock_mutex);
             game_update[game] = 0;
             continue;
         }
@@ -135,7 +147,7 @@ void play_game(void *args) {
 
         char send_buf[2];
         send_buf[0] = END, send_buf[1] = (unsigned char)(game_status);
-        pthread_mutex_lock(&sock_mutex);
+        //pthread_mutex_lock(&sock_mutex);
         printf("Sending END to: \n");
         sendto(sockfd, (void *)(&send_buf), 2, 0, (struct sockaddr *)&clients[current_player].address,
                sizeof(struct sockaddr_in));  // send the make you move
@@ -143,7 +155,7 @@ void play_game(void *args) {
         sendto(sockfd, (void *)(&send_buf), 2, 0, (struct sockaddr *)&clients[other_player].address,
                sizeof(struct sockaddr_in));  // send the make you move
 
-        pthread_mutex_unlock(&sock_mutex);
+        //pthread_mutex_unlock(&sock_mutex);
         game_update[game] = 0;
     }
 }
@@ -167,13 +179,13 @@ int main(int argc, char **argv) {
 
     struct sockaddr_in received_address;
     socklen_t size;
-    char temp_buf[1024];
+    char temp_buf[128];
     init_game_threads();
 
     while (1) {
-        pthread_mutex_lock(&sock_mutex);
-        recvfrom(sockfd, temp_buf, 1024, 0, (struct sockaddr *)&received_address, &size);
-        pthread_mutex_unlock(&sock_mutex);
+        //pthread_mutex_lock(&sock_mutex);
+        recvfrom(sockfd, temp_buf, 128, 0, (struct sockaddr *)&received_address, &size);
+        //pthread_mutex_unlock(&sock_mutex);
 
         if (DEBUG) {
             debug_message(temp_buf);
@@ -182,9 +194,9 @@ int main(int argc, char **argv) {
         int cur_client = find_address(&received_address, temp_buf);
         printf("%d \n", cur_client);
         if (cur_client == -1) {
-            pthread_mutex_lock(&sock_mutex);
+            //pthread_mutex_lock(&sock_mutex);
             sendto(sockfd, "Too many games at the moment", 32, 0, (struct sockaddr *)&received_address, size);
-            pthread_mutex_unlock(&sock_mutex);
+            //pthread_mutex_unlock(&sock_mutex);
         }
     }
 }
@@ -194,7 +206,7 @@ void zero_game_boards() {
     for (i = 0; i < MAX_GAMES; ++i) {
         games[i][0] = FYI;
         games[i][1] = 0;
-        games[i][2] = '0';
+        games[i][2] = '\0';
     }
 }
 
@@ -218,6 +230,7 @@ int find_address(struct sockaddr_in *address, char *temp_buf) {
     int i = 0;
     for (i = 0; i < number_clients; ++i) {
         if (clients[i].address.sin_addr.s_addr == address->sin_addr.s_addr &&
+            // might need a mutex here for game_update
             clients[i].address.sin_port == address->sin_port) {
             strncpy(clients[i].msg, temp_buf, 128);
             int cur_game = FIND_GAME(i);
@@ -236,17 +249,24 @@ int find_address(struct sockaddr_in *address, char *temp_buf) {
     send_welcome(number_clients - 1);
     int cur_game = FIND_GAME(number_clients - 1);
     if ((number_clients - 1) % 2 == 1) {
-        pthread_mutex_lock(&sock_mutex);
-        printf("Sending FYI to: \n");
+        //pthread_mutex_lock(&sock_mutex);
+        printf("Sending FYI to client: %d with address %s\n", number_clients - 2,
+               inet_ntoa(clients[number_clients - 2].address.sin_addr));
+        printf("Sending the board: %s \n", clients[number_clients - 2].msg);
+        printByteByByte(clients[number_clients -2].msg, strlen(clients[number_clients -2].msg));
+
         sendto(sockfd, (void *)(games[cur_game]), strlen(games[cur_game]), 0,
                (struct sockaddr *)&clients[number_clients - 2].address,
                sizeof(struct sockaddr_in));  // send the FYI
-        printf("Sending MYM to: \n");
+
+
+        printf("Sending MYM to client: %d with address %s \n", number_clients - 2,
+               inet_ntoa(clients[number_clients - 2].address.sin_addr));
 
         char send_buf = MYM;
         sendto(sockfd, (void *)&send_buf, 1, 0, (struct sockaddr *)&clients[number_clients - 2].address,
                sizeof(struct sockaddr_in));  // send the make you move
-        pthread_mutex_unlock(&sock_mutex);
+        //pthread_mutex_unlock(&sock_mutex);
     }
     return number_clients - 1;
 }
@@ -255,34 +275,54 @@ void send_welcome(int clientid) {
     char buffer[64];
     buffer[0] = TXT;
     snprintf(buffer, 64, "%cWelcome you are player %d in game %d\n", TXT, CLIENT_NUMBER(clientid), FIND_GAME(clientid));
-    pthread_mutex_lock(&sock_mutex);
+    //pthread_mutex_lock(&sock_mutex);
     sendto(sockfd, buffer, 64, 0, (struct sockaddr *)&clients[clientid].address, sizeof(struct sockaddr_in));
-    pthread_mutex_unlock(&sock_mutex);
+    //pthread_mutex_unlock(&sock_mutex);
 }
 
 void debug_message(char *message) {
-    char buffer[128];
+    // char buffer[128];
+    printf("Ne futem aici in pizda in debug \n");
     switch (message[0]) {
         case FYI:
-            snprintf(buffer, 4, "FYI");
+            printf("AVEM UN FYI \n");
+            // snprintf(buffer, 4, "%s", "FYI");
             break;
         case MYM:
-            snprintf(buffer, 4, "MYM");
+            printf("AVEM UN MYM \n");
+            // snprintf(buffer, 4,"%s" ,"MYM");
             break;
         case END:
-            snprintf(buffer, 4, "END");
+            printf("AVEM UN END \n");
+            // snprintf(buffer, 4,"%s" ,"END");
             break;
         case TXT:
-            snprintf(buffer, 4, "TXT");
+            printf("AVEM UN TXT \n");
+            // snprintf(buffer, 4,"%s" ,"TXT");
             break;
         case MOV:
-            snprintf(buffer, 4, "MOV");
+            // snprintf(buffer, 4,"%s" ,"MOV");
+            printf("AVEM UN MOV \n");
             break;
         case LFT:
-            snprintf(buffer, 4, "LFT");
+            printf("AVEM UN LFT \n");
+            // snprintf(buffer, 4,"%s" ,"LFT");
             break;
     }
-    snprintf(buffer + 3, 125, "%s", message);
 
-    printf("%s \n", message);
+    // printf("%s \n", buffer);
+}
+
+
+void printByteByByte(void *buffer, int size) {
+    printf("Printing Byte by byte \n");
+    printf("The size is %d \n", size);
+    unsigned char *bytes = (unsigned char *)buffer;
+    int i;
+
+    for (i = 0; i < size; i++) {
+        printf("%02X ", bytes[i]);
+    }
+
+    printf("\n");
 }
