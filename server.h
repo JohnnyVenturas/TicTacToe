@@ -45,23 +45,23 @@ void zero_game_boards();
 
 //game
 
-int check_game_validity(int game_num, int i, int j, int player_num);
-'''
+int check_game_validity(int game_num, int i, int j);
+/*
 -2 illegal move
 -1 normal move
 0 draw
 1 player 1 won
 2 draw
-'''
-
+*/
 //*args == game 
 void play_game(void *args);
 
-int find_address(struct sockaddr_in *address);
+int find_address(struct sockaddr_in *address, char *temp_buf);
 void init_game_threads();
-void send_welcome(struct sockaddr_in *address);
+void send_welcome(int clientid);
 void debug_message(char *message);
     
 
+void init_game_update();
 
 
