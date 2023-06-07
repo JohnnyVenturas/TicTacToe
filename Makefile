@@ -1,4 +1,4 @@
-all:fancy-client client
+all:fancy-client client server
 
 fancy-client: fancy-client.o
 	gcc -Wall -Werror -lpthread -o fancy-client fancy-client.o
@@ -12,5 +12,11 @@ client: client.o
 client.o: client.c
 	gcc -c -g client.c
 
+server: server.o
+	gcc -Wall -Werror -lpthread -o server server.o
+
+server.o: server.c
+	gcc -c -g server.c
+
 clean:
-	rm client.o client fancy-client fancy-client.o
+	rm client.o client fancy-client fancy-client.o server server.o
