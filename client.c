@@ -43,6 +43,7 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
         }
         switch (message_buffer[0]) {
             case FYI:
+                printf("SEXXANALLLLL\n");
                 print_board(message_buffer, recv_bytes);
                 break;
             case TXT:
@@ -108,7 +109,7 @@ void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
         printf("Please make your move by entering row and column 0,1 or 2: \n");
 
         if (fgets(send_buf, 32, stdin) == NULL) {
-            fprintf(stderr, "An error has occured while reading stdin %s \n");
+            fprintf(stderr, "An error has occured while reading stdin %s \n", strerror(errno));
             exit(1);
         }
 
@@ -133,6 +134,7 @@ void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
         }
 
         sendto(sockfd, send_buf, 3, 0, (struct sockaddr *)address, sizeof(struct sockaddr_in));
+        break;
     }
 }
 
