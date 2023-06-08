@@ -15,7 +15,7 @@
 #define DEBUG 1
 
 
-#define MAX_GAMES 3
+#define MAX_GAMES 5
 #define FIRST 1
 #define SECOND 2
 
