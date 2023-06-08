@@ -72,7 +72,7 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
 
 void print_board(char *message_buffer, int size) {
     //printf("We are in clinet in FYI \n");
-    printByteByByte(message_buffer, size);
+    //printByteByByte(message_buffer, size);
     if (*message_buffer != FYI) {
         fprintf(stderr, "We have encountered and error, not FYI \n");
     }
@@ -99,7 +99,7 @@ void print_board(char *message_buffer, int size) {
         matrix[j][k] = message_buffer[i] == 1 ? 'X' : 'O';
     }
     //printf("We are in clinet in FYI. Here we should print the empty matrix \n");
-    printByteByByte(message_buffer, size);
+    //printByteByByte(message_buffer, size);
 
     for (i = 0; i < 3; ++i) {
         for (j = 0; j < 3; ++j) {
@@ -108,6 +108,7 @@ void print_board(char *message_buffer, int size) {
         }
         printf("\n");
     }
+    printf("\n");
 }
 
 void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
@@ -128,7 +129,7 @@ void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
             continue;
         }
         //printf("We are printing send_buf byte by byte: \n");
-        printByteByByte(send_buf, 3);
+        //printByteByByte(send_buf, 3);
         send_buf[0] = MOV;
         send_buf[1] = (unsigned char)row;
         send_buf[2] = (unsigned char)col;
