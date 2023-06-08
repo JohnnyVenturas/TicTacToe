@@ -12,7 +12,7 @@
 #define TXT 0x04
 #define MOV 0x05
 #define LFT 0x06
-#define DEBUG 1
+#define DEBUG 0
 
 
 #define MAX_GAMES 5

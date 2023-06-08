@@ -20,10 +20,10 @@ pthread_mutex_t sock_mutex = PTHREAD_MUTEX_INITIALIZER;
 // i and j are the positions of the next move to make and player_num is 1 if its player 1's move else 2
 
 int check_game_validity(int game_num, int i, int j) {
-    printf("we are in check_game_validity \n");
+    //printf("we are in check_game_validity \n");
     int player_num = which_client_update[game_num] + 1;
 
-    printf("GN == %d i == %d j == %d \n", game_num, i, j);
+    //printf("GN == %d i == %d j == %d \n", game_num, i, j);
 
     char board[3][3] = {{SPACE, SPACE, SPACE}, {SPACE, SPACE, SPACE}, {SPACE, SPACE, SPACE}};
 
@@ -99,16 +99,15 @@ void play_game(void *args) {
     int game = *((int *)args);
     while (1) {
         if (game_update[game] == 0) continue;
-        //printf("%d \n", game_update[game]);
+        // printf("%d \n", game_update[game]);
 
         int current_player = 2 * game + which_client_update[game];
         int other_player = 2 * game + (1 - which_client_update[game]);
 
-         //printf("Tigan Gypse %d %d %d curr \n", clients[current_player].msg[0], clients[current_player].msg[1],
-                //clients[current_player].msg[2]);
-        printf("Starting to receive form client mov XXXXXXXXX \n");
+        // clients[current_player].msg[2]);
+        printf("Starting to receive form client mov \n");
         printByteByByte(clients[current_player].msg, 3);
-        printf("Finish to receive form client mov XXXXXXXXX \n");
+        printf("Finish to receive form client mov \n");
         int game_status =
             check_game_validity(game, (int)(clients[current_player].msg[1]),
                                 (int)(clients[current_player].msg[2]));  // ASLO UPDATES THE STATE OF THE GAME
@@ -130,7 +129,7 @@ void play_game(void *args) {
             }
 
             char send_buf = MYM;
-            // pthread_mutex_lock(&sock_mutex);
+            pthread_mutex_lock(&sock_mutex);
             printf("Sending FYI to client: %d with address %s \n", sendclient,
                    inet_ntoa(destination->address.sin_addr));
 
@@ -142,7 +141,7 @@ void play_game(void *args) {
 
             sendto(sockfd, &send_buf, 1, 0, (struct sockaddr *)&destination->address,
                    sizeof(struct sockaddr_in));  // send the make you move
-            // pthread_mutex_unlock(&sock_mutex);
+            pthread_mutex_unlock(&sock_mutex);
             game_update[game] = 0;
             continue;
         }
@@ -151,7 +150,7 @@ void play_game(void *args) {
 
         char send_buf[2];
         send_buf[0] = END, send_buf[1] = (unsigned char)(game_status);
-        // pthread_mutex_lock(&sock_mutex);
+        pthread_mutex_lock(&sock_mutex);
         printf("Sending END to: \n");
         sendto(sockfd, (void *)(&send_buf), 2, 0, (struct sockaddr *)&clients[current_player].address,
                sizeof(struct sockaddr_in));  // send the make you move
@@ -159,7 +158,7 @@ void play_game(void *args) {
         sendto(sockfd, (void *)(&send_buf), 2, 0, (struct sockaddr *)&clients[other_player].address,
                sizeof(struct sockaddr_in));  // send the make you move
 
-        // pthread_mutex_unlock(&sock_mutex);
+        pthread_mutex_unlock(&sock_mutex);
         game_update[game] = 0;
     }
 }
@@ -182,19 +181,20 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Bind failed: %s \n", strerror(errno));
     }
 
+    printf("Server started succesfully \n");
+    printf("Listening on port %s \n", argv[1]);
+
     struct sockaddr_in received_address;
     socklen_t size;
     char temp_buf[128];
     init_game_threads();
 
     while (1) {
-        // pthread_mutex_lock(&sock_mutex);
         recvfrom(sockfd, temp_buf, 128, 0, (struct sockaddr *)&received_address, &size);
-        // pthread_mutex_unlock(&sock_mutex);
-        printf("Starting to receive form client mov XXXXXXXXX \n");
+        // printf("Starting to receive form client mov XXXXXXXXX \n");
         printByteByByte(temp_buf, 20);
 
-        printf("Finishing to receive form client mov XXXXXXXXX \n");
+        // printf("Finishing to receive form client mov XXXXXXXXX \n");
         if (DEBUG) {
             debug_message(temp_buf);
         }
@@ -202,11 +202,11 @@ int main(int argc, char **argv) {
         int cur_client = find_address(&received_address, temp_buf);
 
         printf("%d \n", cur_client);
-        char problem[2] ={END, 0xFF};
+        char problem[2] = {END, 0xFF};
         if (cur_client == -1) {
-            // pthread_mutex_lock(&sock_mutex);
+             pthread_mutex_lock(&sock_mutex);
             sendto(sockfd, problem, 2, 0, (struct sockaddr *)&received_address, size);
-            // pthread_mutex_unlock(&sock_mutex);
+             pthread_mutex_unlock(&sock_mutex);
         }
     }
 }
@@ -249,7 +249,7 @@ int find_address(struct sockaddr_in *address, char *temp_buf) {
             return i;
         }
     }
-    if (number_clients * 2 >= MAX_GAMES) {
+    if (number_clients >= MAX_GAMES * 2) {
         return -1;
     }
     number_clients++;
@@ -259,7 +259,7 @@ int find_address(struct sockaddr_in *address, char *temp_buf) {
     send_welcome(number_clients - 1);
     int cur_game = FIND_GAME(number_clients - 1);
     if ((number_clients - 1) % 2 == 1) {
-        // pthread_mutex_lock(&sock_mutex);
+        pthread_mutex_lock(&sock_mutex);
         printf("Sending FYI to client: %d with address %s\n", number_clients - 2,
                inet_ntoa(clients[number_clients - 2].address.sin_addr));
 
@@ -268,6 +268,8 @@ int find_address(struct sockaddr_in *address, char *temp_buf) {
         sendto(sockfd, (void *)(games[cur_game]), games[cur_game][1] * 3 + 2, 0,
                (struct sockaddr *)&clients[number_clients - 2].address,
                sizeof(struct sockaddr_in));  // send the FYI
+        pthread_mutex_unlock(&sock_mutex);
+        pthread_mutex_lock(&sock_mutex);
 
         printf("Sending MYM to client: %d with address %s \n", number_clients - 2,
                inet_ntoa(clients[number_clients - 2].address.sin_addr));
@@ -275,7 +277,7 @@ int find_address(struct sockaddr_in *address, char *temp_buf) {
         char send_buf = MYM;
         sendto(sockfd, (void *)&send_buf, 1, 0, (struct sockaddr *)&clients[number_clients - 2].address,
                sizeof(struct sockaddr_in));  // send the make you move
-        // pthread_mutex_unlock(&sock_mutex);
+        pthread_mutex_unlock(&sock_mutex);
     }
     return number_clients - 1;
 }
@@ -284,9 +286,9 @@ void send_welcome(int clientid) {
     char buffer[64];
     buffer[0] = TXT;
     snprintf(buffer, 64, "%cWelcome you are player %d in game %d\n", TXT, CLIENT_NUMBER(clientid), FIND_GAME(clientid));
-    // pthread_mutex_lock(&sock_mutex);
+    pthread_mutex_lock(&sock_mutex);
     sendto(sockfd, buffer, 64, 0, (struct sockaddr *)&clients[clientid].address, sizeof(struct sockaddr_in));
-    // pthread_mutex_unlock(&sock_mutex);
+    pthread_mutex_unlock(&sock_mutex);
 }
 
 void debug_message(char *message) {

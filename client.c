@@ -28,12 +28,14 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
     socklen_t recv_size;
     char send_buf[32];
     int recv_bytes;
+    int to_send;
     while (1) {
         if ((recv_bytes = recvfrom(sockfd, message_buffer, 1024, 0, (struct sockaddr *)&recv_address, &recv_size)) ==
             -1) {
             fprintf(stderr, "Error in receiving bytes form server");
             exit(1);  // or maybe make the function in and return 1
         }
+        to_send = 1;
 
         message_buffer[recv_bytes] = '\0';
 
@@ -43,7 +45,6 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
         }
         switch (message_buffer[0]) {
             case FYI:
-                printf("SEXXANALLLLL\n");
                 print_board(message_buffer, recv_bytes);
                 break;
             case TXT:
@@ -70,7 +71,7 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
 }
 
 void print_board(char *message_buffer, int size) {
-    printf("We are in clinet in FYI \n");
+    //printf("We are in clinet in FYI \n");
     printByteByByte(message_buffer, size);
     if (*message_buffer != FYI) {
         fprintf(stderr, "We have encountered and error, not FYI \n");
@@ -97,7 +98,7 @@ void print_board(char *message_buffer, int size) {
 
         matrix[j][k] = message_buffer[i] == 1 ? 'X' : 'O';
     }
-    printf("We are in clinet in FYI. Here we should print the empty matrix \n");
+    //printf("We are in clinet in FYI. Here we should print the empty matrix \n");
     printByteByByte(message_buffer, size);
 
     for (i = 0; i < 3; ++i) {
@@ -119,14 +120,14 @@ void get_move(int sockfd, struct sockaddr *address, char *send_buf) {
         }
 
         int row, col;
-        printf("\n send_buf is : %s", send_buf);
+        //printf("\n send_buf is : %s", send_buf);
         sscanf(send_buf, "%d %d", &row, &col);
 
         if (row < 0 || row > 2 || col < 0 || col > 2) {
             printf("Your move was not valid! \n");
             continue;
         }
-        printf("We are printing send_buf byte by byte: \n");
+        //printf("We are printing send_buf byte by byte: \n");
         printByteByByte(send_buf, 3);
         send_buf[0] = MOV;
         send_buf[1] = (unsigned char)row;
