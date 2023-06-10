@@ -1,10 +1,5 @@
-all:fancy-client client server
-
-fancy-client: fancy-client.o
-	gcc -Wall -Werror -lpthread -o fancy-client fancy-client.o
-
-fancy-client.o: fancy-client.c
-	gcc -c -g fancy-client.c
+#Bogdan Budura, Cassidy Kevorkian-Mielly and Sebastian Simon worked together towards the completion of this project
+all:client server
 
 client: client.o
 	gcc -Wall -Werror -o client client.o
@@ -19,4 +14,4 @@ server.o: server.c
 	gcc -c -g server.c
 
 clean:
-	rm client.o client fancy-client fancy-client.o server server.o
+	rm client.o client server server.o

@@ -1,3 +1,4 @@
+//Bogdan Budura, Cassidy Kevorkian-Mielly and Sebastian Simon worked together towards the completion of this project
 #include <errno.h>
 #include <netinet/in.h>
 #include <pthread.h>

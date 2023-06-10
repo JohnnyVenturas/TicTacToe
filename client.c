@@ -1,4 +1,4 @@
-
+//Bogdan Budura, Cassidy Kevorkian-Mielly and Sebastian Simon worked together towards the completion of this project
 #include "client.h"
 
 #include <arpa/inet.h>
@@ -60,7 +60,7 @@ void tic_tac_toe(int sockfd, struct sockaddr_in *address) {
                 } else if (message_buffer[1] == 2) {
                     printf("Player Two won \n");
                 } else if (message_buffer[1] == 0) {
-                    printf("\nDRAW\n ");
+                    printf("\nDRAW\n");
                 } else {
                     printf("\nNo room for you\n");
                 }
